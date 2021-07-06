@@ -1,9 +1,9 @@
-from flask import Flask, jsonify
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-import config
+from config import POSTGRE_URI
 
 
 app = Flask(__name__)
-app.config.from_mapping(SQLALCHEMY_DATABASE_URI=config.POSTGRE_URI)
-sq = SQLAlchemy(app)
+app.config.from_mapping(SQLALCHEMY_DATABASE_URI=POSTGRE_URI)
+db = SQLAlchemy(app)
 

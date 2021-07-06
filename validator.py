@@ -1,8 +1,9 @@
+import flask
 import jsonschema
-from flask import request
+from flask import jsonify, request
 
 
-def validate(source: str, req_schema: dict):
+def validate(req_schema: dict):
     """Валидатор входящих запросов"""
 
     def decorator(func):
@@ -10,10 +11,12 @@ def validate(source: str, req_schema: dict):
         def wrapper(*args, **kwargs):
             try:
                 jsonschema.validate(
-                    instance=getattr(request, source), schema=req_schema,
+                    request.get_json(), schema=req_schema,
                 )
-            except jsonschema.ValidationError:
-                raise Exception('Data err')
+            except jsonschema.ValidationError as er:
+                resp = flask.make_response(jsonify({'success': False, 'description': er.message}))
+                resp.set_status = 401
+                return resp
 
             result = func(*args, **kwargs)
 
