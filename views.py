@@ -2,13 +2,17 @@ from app import app
 from flask import jsonify, request
 from schema import USER_CREATE, AD_CREATE
 from validator import validate
-from models import User, Advert
-
+from models import User
+from app import db
 
 @app.route('/test', methods=['GET', ])
 def test_me():
     return jsonify({'test_me': 'OK!'})
 
+@app.route('/createdb', methods=['GET', ])
+def create_db():
+    db.create_all()
+    return jsonify({'db': 'OK!'})
 
 @app.route('/users', methods=['POST'])
 @validate(USER_CREATE)

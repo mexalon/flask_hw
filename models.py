@@ -1,12 +1,9 @@
 from datetime import datetime
-
 from sqlalchemy.orm import relationship
 
-import config
-from app import db
-
 import hashlib
-
+from app import db
+import config
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -36,7 +33,6 @@ class User(db.Model):
 
     def add(self):
         db.session.add(self)
-        print(f'<><><><><><><{self}><><><><><><>')
         try:
             db.session.commit()
         except Exception as er:
@@ -66,7 +62,6 @@ class Advert(db.Model):
         }
 
     def add(self):
-        print('<><><><><><><><><><><><><>')
         db.session.add(self)
         try:
             db.session.commit()
