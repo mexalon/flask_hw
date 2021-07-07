@@ -1,9 +1,10 @@
 from datetime import datetime
 from sqlalchemy.orm import relationship
-
 import hashlib
+
 from app import db
 import config
+
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -63,6 +64,13 @@ class Advert(db.Model):
 
     def add(self):
         db.session.add(self)
+        try:
+            db.session.commit()
+        except Exception as er:
+            raise Exception(f'DB error: {er}')
+
+    def delete(self):
+        db.session.delete(self)
         try:
             db.session.commit()
         except Exception as er:
