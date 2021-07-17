@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  flask_sampl:
+    image: mflask
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+
+    volumes:
+      - ./app:/app
+    depends_on:
+      - my_postgres
+    ports:
+      - 5000:5000
+    environment:
+      POSTGRE_URI : postgresql://user_db:user_pass@my_postgres:5432/db_name
+    env_file:
+      my_secret_env_file.env
+
+  my_postgres:
+    image: postgres
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER : user_db
+      POSTGRES_PASSWORD : user_pass
+      POSTGRES_DB : db_name
+    env_file:
+      my_secret_env_file.env
+
+  web:
+    image: nginx
+    restart: unless-stopped
+    depends_on:
+      - flask_sampl
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+
+
+

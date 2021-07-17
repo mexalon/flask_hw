@@ -10,7 +10,7 @@ def test_me():
     return jsonify({'test_me': 'OK!'})
 
 
-@app.route('/createdb', methods=['GET', ])
+@app.route('/', methods=['GET', ])
 def create_db():
     db.create_all()
     return jsonify({'db': 'OK!'})
