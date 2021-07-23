@@ -59,7 +59,7 @@ def get_ads():
 def get_ad(uid):
     ads = Advert.query.get(uid)
     if ads:
-        return jsonify({'adverts': [a.to_dict() for a in ads]})
+        return jsonify({'adverts': ads.to_dict()})
     else:
         return jsonify({'resp': 'advert not found'})
 
