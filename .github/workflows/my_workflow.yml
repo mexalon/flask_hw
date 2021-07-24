@@ -1,5 +1,8 @@
   name: flask_hw
-  on: [ push ]
+  on:
+    push:
+      branches:
+        - heroku_hw
   jobs:
     tests:
       runs-on: ubuntu-latest
