@@ -39,6 +39,13 @@ class User(db.Model):
         except Exception as er:
             raise Exception(f'DB error: {er}')
 
+    def delete(self):
+        db.session.delete(self)
+        try:
+            db.session.commit()
+        except Exception as er:
+            raise Exception(f'DB error: {er}')
+
 
 class Advert(db.Model):
     id = db.Column(db.Integer, primary_key=True)
