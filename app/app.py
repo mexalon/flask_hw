@@ -1,12 +1,40 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+from aiohttp import web
+
+from views import HealthView, UserView, AdvertView
+from models import db
 from config import DATABASE_URL
 
-app = Flask(__name__)
+CORRECT_DB_URL = DATABASE_URL
+if CORRECT_DB_URL.startswith("postgres://"):
+    CORRECT_DB_URL = CORRECT_DB_URL.replace("postgres://", "postgresql://", 1)
 
-uri = DATABASE_URL
-if uri.startswith("postgres://"):
-    uri = uri.replace("postgres://", "postgresql://", 1)
 
-app.config.from_mapping(SQLALCHEMY_DATABASE_URI=uri)
-db = SQLAlchemy(app)
+async def init_orm(app):
+    print(f'приложение стартовало DB_URL >>> {CORRECT_DB_URL}')
+
+    await db.set_bind(CORRECT_DB_URL)
+    await db.gino.create_all()
+
+    yield
+    await db.pop_bind().close()
+
+app = web.Application()
+app.cleanup_ctx.append(init_orm)
+
+app.add_routes([web.get('/test', HealthView)])
+
+user_view = UserView()
+app.add_routes([
+    web.get('/users', user_view.get),
+    web.post('/users', user_view.post),
+    web.get('/users/{uid:\d+}', user_view.get_user),
+])
+
+ad_view = AdvertView()
+app.add_routes([
+    web.get('/adverts', ad_view.get_ads),
+    web.get('/adverts/{aid:\d+}', ad_view.get_ad),
+    web.post('/adverts', ad_view.new_ad),
+    web.patch('/adverts/{aid:\d+}', ad_view.patch_ad),
+    web.delete('/adverts/{aid:\d+}', ad_view.del_ad),
+])

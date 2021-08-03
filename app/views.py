@@ -1,130 +1,143 @@
-from flask import jsonify, request
+import jsonschema
+from aiohttp import web
+
 from schema import USER_CREATE, AD_CREATE
-from validator import validate
+
 from models import User, Advert
-from app import app, db
 
 
-@app.route('/test', methods=['GET', ])
-def test_me():
-    return jsonify({'test_me': 'OK!'})
+async def validate(data, req_schema):
+    try:
+        jsonschema.validate(
+            data, schema=req_schema,
+        )
+    except jsonschema.ValidationError as er:
+        print(er.message)
+        raise web.HTTPBadRequest
+    return data
 
 
-@app.route('/', methods=['GET', ])
-def create_db():
-    db.create_all()
-    return jsonify({'db': 'OK!'})
+class HealthView(web.View):
+    async def get(self):
+        return web.json_response({'test_me': 'OK!'})
 
 
-@validate(USER_CREATE)
-@app.route('/users', methods=['POST'])
-def new_user():
-    username = request.json.get('username')
-    password = request.json.get('password')
+class UserView:
+    def __init__(self):
+        pass
 
-    user = User(username=username)
-    user.set_password(password)
-    user.add()
-    return jsonify(user.to_dict())
+    async def post(self, request):
+        data = await request.json()
 
+        data = await validate(data, USER_CREATE)
+        username = data.get('username')
+        password = data.get('password')
+        try:
+            user = await User.create(username=username)
+            await user.set_password(password)
+            return web.json_response(user.to_dict())
 
-@app.route('/users', methods=['GET'])
-def get_users():
-    users = User.query.all()
-    if users:
-        return jsonify({'users': [u.to_dict() for u in users]})
-    else:
-        return jsonify({'resp': 'users not found'})
+        except Exception as er:
+            print(er)
+            raise web.HTTPBadRequest
 
+    async def get(self, request):
+        users = await User.query.gino.all()
 
-@app.route('/users/<int:uid>', methods=['GET'])
-def get_user(uid):
-    user = User.query.get(uid)
-    if user:
-        return jsonify(user.to_dict())
-    else:
-        return jsonify({'resp': 'user not found'})
+        if users:
+            return web.json_response({'users': [u.to_dict() for u in users]})
+        else:
+            return web.json_response({'resp': 'users not found'})
 
-
-@app.route('/adverts', methods=['GET'])
-def get_ads():
-    ads = Advert.query.all()
-    if ads:
-        return jsonify({'adverts': [a.to_dict() for a in ads]})
-    else:
-        return jsonify({'resp': 'adverts not found'})
+    async def get_user(self, request):
+        user_id = request.match_info['uid']
+        user = await User.get(int(user_id))
+        if user:
+            return web.json_response(user.to_dict())
+        else:
+            return web.json_response({'resp': 'user not found'})
 
 
-@app.route('/adverts/<int:uid>', methods=['GET'])
-def get_ad(uid):
-    ads = Advert.query.get(uid)
-    if ads:
-        return jsonify({'adverts': ads.to_dict()})
-    else:
-        return jsonify({'resp': 'advert not found'})
+class AdvertView:
+    def __init__(self):
+        pass
 
+    async def get_ads(self, request):
+        ads = await Advert.query.gino.all()
+        if ads:
+            return web.json_response({'adverts': [a.to_dict() for a in ads]})
+        else:
+            return web.json_response({'resp': 'adverts not found'})
 
-@validate(AD_CREATE)
-@app.route('/adverts', methods=['POST'])
-def new_ad():
-    username = dict(request.headers).get("Username")
-    password = dict(request.headers).get("Password")
+    async def get_ad(self, request):
+        ads_id = request.match_info['aid']
+        ads = await Advert.get(int(ads_id))
+        if ads:
+            return web.json_response({'adverts': ads.to_dict()})
+        else:
+            return web.json_response({'resp': 'advert not found'})
 
-    owner = User.query.filter(User.username == username).first()
-    if owner:
-        if owner.check_password(password):
-            o_id = owner.id
-            title = request.json.get('title')
-            description = request.json.get('description')
-            newad = Advert(title=title, description=description, owner=o_id)
-            newad.add()
-            return jsonify(newad.to_dict())
+    async def new_ad(self, request):
+        header = request.headers
+        username = header.get("Username")
+        password = header.get("Password")
+        owner = await User.query.where(User.username == username).gino.first()
+        if owner:
+            if owner.check_password(password):
+                o_id = owner.id
+                body = await request.json()
+                body = await validate(body, AD_CREATE)
+                title = body.get('title')
+                description = body.get('description')
+                newad = await Advert.create(title=title, description=description, owner=o_id)
+                return web.json_response(newad.to_dict())
 
-        return jsonify({'resp': 'wrong pass'})
+            return web.json_response({'resp': 'wrong pass'})
 
-    else:
-        return jsonify({'resp': 'no auth'})
+        else:
+            return web.json_response({'resp': 'no auth'})
 
+    async def patch_ad(self, request):
+        ads_id = request.match_info['aid']
+        ad = await Advert.get(int(ads_id))
+        if not ad:
+            return web.json_response({'resp': 'no such ad'})
 
-@validate(AD_CREATE)
-@app.route('/adverts/<int:aid>', methods=['PATCH'])
-def patch_ad(aid):
-    ad = Advert.query.get(aid)
-    if not ad:
-        return jsonify({'resp': 'no such ad'})
+        header = request.headers
+        username = header.get("Username")
+        password = header.get("Password")
+        owner = await User.query.where(User.username == username).gino.first()
+        if owner:
+            if owner.check_password(password):
+                body = await request.json()
+                body = await validate(body, AD_CREATE)
+                title = body.get('title')
+                description = body.get('description')
+                await ad.update(title=title, description=description).apply()
 
-    username = dict(request.headers).get("Username")
-    password = dict(request.headers).get("Password")
-    owner = User.query.filter(User.username == username).first()
-    if owner:
-        if owner.check_password(password):
-            ad.title = request.json.get('title')
-            ad.description = request.json.get('description')
-            ad.add()
+                return web.json_response(ad.to_dict())
 
-            return jsonify(ad.to_dict())
+            return web.json_response({'resp': 'wrong pass'})
 
-        return jsonify({'resp': 'wrong pass'})
+        else:
+            return web.json_response({'resp': 'no auth'})
 
-    else:
-        return jsonify({'resp': 'no auth'})
+    async def del_ad(self, request):
+        ads_id = request.match_info['aid']
+        ad = await Advert.get(int(ads_id))
+        if not ad:
+            return web.json_response({'resp': 'no such ad'})
 
+        header = request.headers
+        username = header.get("Username")
+        password = header.get("Password")
+        owner = await User.query.where(User.username == username).gino.first()
+        if owner:
+            if owner.check_password(password):
+                await ad.delete()
+                return web.json_response({'resp': f'deleted'})
 
-@app.route('/adverts/<int:aid>', methods=['DELETE'])
-def del_ad(aid):
-    ad = Advert.query.get(aid)
-    if not ad:
-        return jsonify({'resp': 'no such ad'})
+            return web.json_response({'resp': 'wrong pass'})
 
-    username = dict(request.headers).get("Username")
-    password = dict(request.headers).get("Password")
-    owner = User.query.filter(User.username == username).first()
-    if owner:
-        if owner.check_password(password):
-            ad.delete()
-            return jsonify({'resp': f'deleted'})
-
-        return jsonify({'resp': 'wrong pass'})
-
-    else:
-        return jsonify({'resp': 'no auth'})
+        else:
+            return web.json_response({'resp': 'no auth'})
