@@ -24,3 +24,23 @@ AD_CREATE = {
     },
     "required": ["title", "description"]
 }
+
+EMAIL = {
+    "properties": {
+        "email": {
+          "title": "Email address",
+          "type": "string",
+          "pattern": "^\\S+@\\S+\\.\\S+$",
+          "format": "email",
+          "minLength": 6,
+          "maxLength": 127
+        },
+        "title": {
+            "type": "string"
+        },
+        "text": {
+            "type": "string",
+        }
+      },
+    "required": ["email", "text"]
+}

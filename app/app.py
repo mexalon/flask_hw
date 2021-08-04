@@ -1,6 +1,6 @@
 from aiohttp import web
 
-from views import HealthView, UserView, AdvertView
+from views import HealthView, UserView, AdvertView, SendEmailView
 from models import db
 from config import DATABASE_URL
 
@@ -38,3 +38,9 @@ app.add_routes([
     web.patch('/adverts/{aid:\d+}', ad_view.patch_ad),
     web.delete('/adverts/{aid:\d+}', ad_view.del_ad),
 ])
+
+send_email_view = SendEmailView()
+app.add_routes([
+    web.get('/sendemail', send_email_view.get),
+    web.post('/sendemail', send_email_view.post),
+    ])

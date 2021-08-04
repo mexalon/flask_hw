@@ -1,9 +1,20 @@
+import time
+
 import jsonschema
 from aiohttp import web
-
-from schema import USER_CREATE, AD_CREATE
-
+import hashlib
+import config
+from schema import USER_CREATE, AD_CREATE, EMAIL
 from models import User, Advert
+from tasks import send_email
+
+
+def check_admin_pass(password):
+    some_password = f'{password}{config.SALT}'
+    some_password = hashlib.md5(some_password.encode()).hexdigest()
+    admin_password = f'{config.ADMIN_PASS}{config.SALT}'
+    admin_password = hashlib.md5(admin_password.encode()).hexdigest()
+    return admin_password == some_password
 
 
 async def validate(data, req_schema):
@@ -20,6 +31,38 @@ async def validate(data, req_schema):
 class HealthView(web.View):
     async def get(self):
         return web.json_response({'test_me': 'OK!'})
+
+
+class SendEmailView:
+    def __init__(self):
+        pass
+
+    async def get(self, request):
+        return web.json_response({'ready': 'OK!'})
+
+    async def post(self, request):
+        header = request.headers
+        username = header.get("Username")
+        password = header.get("Password")
+        if username == config.ADMIN and check_admin_pass(password):
+            body = await request.json()
+            body = await validate(body, EMAIL)
+            email = body.get("email")
+            title = body.get('title', 'no subject')
+            text = body.get('text')
+            print(",.,.,.,.,.,.,.,.,.,.")
+            result = send_email.delay(email, title, text)
+            print(f"><><><><>{result}<><><><><><>")
+
+            time.sleep(2)
+            print(f"{result.get()}")
+
+            print(f'>{email}>{title}>{text}')
+
+            return web.json_response({'success': f'{email}'})
+
+        else:
+            return web.json_response({'resp': 'no auth'})
 
 
 class UserView:
