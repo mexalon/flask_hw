@@ -42,5 +42,6 @@ app.add_routes([
 send_email_view = SendEmailView()
 app.add_routes([
     web.get('/sendemail', send_email_view.get),
-    web.post('/sendemail', send_email_view.post),
+    web.post('/sendemail', send_email_view.send_to),
+    web.get('/sendemail/{task_id}', send_email_view.get_task),
     ])

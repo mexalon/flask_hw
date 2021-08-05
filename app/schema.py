@@ -25,7 +25,7 @@ AD_CREATE = {
     "required": ["title", "description"]
 }
 
-EMAIL = {
+EMAIL_SH = {
     "properties": {
         "email": {
           "title": "Email address",

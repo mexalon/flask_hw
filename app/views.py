@@ -1,10 +1,9 @@
-import time
 
 import jsonschema
 from aiohttp import web
 import hashlib
 import config
-from schema import USER_CREATE, AD_CREATE, EMAIL
+from schema import USER_CREATE, AD_CREATE, EMAIL_SH
 from models import User, Advert
 from tasks import send_email
 
@@ -40,26 +39,32 @@ class SendEmailView:
     async def get(self, request):
         return web.json_response({'ready': 'OK!'})
 
-    async def post(self, request):
+    async def get_task(self, request):
+        """следит за статусом отправки по таск айди"""
+        task_id = request.match_info['task_id']
+        try:
+            res = send_email.AsyncResult(task_id)
+            return web.json_response({'status': f'{res.status}'})
+        except Exception as er:
+            print(f"fail >> {er}")
+
+        return web.json_response({'status': 'fail'})
+
+    async def send_to(self, request):
+        """Шлёт письмо на указанный адрес"""
         header = request.headers
         username = header.get("Username")
         password = header.get("Password")
         if username == config.ADMIN and check_admin_pass(password):
             body = await request.json()
-            body = await validate(body, EMAIL)
-            email = body.get("email")
+            body = await validate(body, EMAIL_SH)
+            to = body.get("email")
             title = body.get('title', 'no subject')
             text = body.get('text')
-            print(",.,.,.,.,.,.,.,.,.,.")
-            result = send_email.delay(email, title, text)
-            print(f"><><><><>{result}<><><><><><>")
 
-            time.sleep(2)
-            print(f"{result.get()}")
+            result = send_email.delay(to, title, text)
 
-            print(f'>{email}>{title}>{text}')
-
-            return web.json_response({'success': f'{email}'})
+            return web.json_response({'success': f'{result}'})
 
         else:
             return web.json_response({'resp': 'no auth'})
@@ -86,7 +91,6 @@ class UserView:
 
     async def get(self, request):
         users = await User.query.gino.all()
-
         if users:
             return web.json_response({'users': [u.to_dict() for u in users]})
         else:
