@@ -7,7 +7,11 @@ USER_CREATE = {
         "password": {
             "type": "string",
             "pattern": "^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$"
-        }
+        },
+        "email": {
+          "type": "string",
+          "pattern": "^\\S+@\\S+\\.\\S+$",
+        },
     },
     "required": ["username", "password"]
 }

@@ -1,4 +1,3 @@
-
 import jsonschema
 from aiohttp import web
 import hashlib
@@ -53,18 +52,60 @@ class SendEmailView:
     async def send_to(self, request):
         """Шлёт письмо на указанный адрес"""
         header = request.headers
-        username = header.get("Username")
-        password = header.get("Password")
+        username = header.get("username")
+        password = header.get("password")
         if username == config.ADMIN and check_admin_pass(password):
             body = await request.json()
             body = await validate(body, EMAIL_SH)
-            to = body.get("email")
+            to = [body.get("email"), ]
             title = body.get('title', 'no subject')
             text = body.get('text')
 
-            result = send_email.delay(to, title, text)
+            result = send_email.delay(title, text, to)
+            return web.json_response({'success': f'{result}'})
+
+        else:
+            return web.json_response({'resp': 'no auth'})
+
+    async def send_to_all(self, request):
+        """Шлёт рассылку по всем имеющимся адресам"""
+        header = request.headers
+        username = header.get("username")
+        password = header.get("password")
+        if username == config.ADMIN and check_admin_pass(password):
+            body = await request.json()
+            title = body.get('title', 'no subject')
+            text = body.get('text')
+
+            users = await User.query.gino.all()
+            to = [u.email for u in users if u.email]
+            print(to)
+            result = send_email.delay(title, text, to)
 
             return web.json_response({'success': f'{result}'})
+
+        else:
+            return web.json_response({'resp': 'no auth'})
+
+    async def send_to_uid(self, request):
+        """Шлёт письмо определённому пользователю"""
+        header = request.headers
+        username = header.get("username")
+        password = header.get("password")
+        if username == config.ADMIN and check_admin_pass(password):
+            body = await request.json()
+            title = body.get('title', 'no subject')
+            text = body.get('text')
+            user_id = request.match_info['uid']
+            user = await User.get(int(user_id))
+            if user:
+                if user.email:
+                    to = [user.email]
+                    result = send_email.delay(title, text, to)
+                    return web.json_response({'success': f'{result}'})
+                return web.json_response({'resp': 'no email'})
+            else:
+                return web.json_response({'resp': 'user not found'})
 
         else:
             return web.json_response({'resp': 'no auth'})
@@ -80,8 +121,9 @@ class UserView:
         data = await validate(data, USER_CREATE)
         username = data.get('username')
         password = data.get('password')
+        email = data.get('email')
         try:
-            user = await User.create(username=username)
+            user = await User.create(username=username, email=email)
             await user.set_password(password)
             return web.json_response(user.to_dict())
 
@@ -126,8 +168,8 @@ class AdvertView:
 
     async def new_ad(self, request):
         header = request.headers
-        username = header.get("Username")
-        password = header.get("Password")
+        username = header.get("username")
+        password = header.get("password")
         owner = await User.query.where(User.username == username).gino.first()
         if owner:
             if owner.check_password(password):
@@ -151,8 +193,8 @@ class AdvertView:
             return web.json_response({'resp': 'no such ad'})
 
         header = request.headers
-        username = header.get("Username")
-        password = header.get("Password")
+        username = header.get("username")
+        password = header.get("password")
         owner = await User.query.where(User.username == username).gino.first()
         if owner:
             if owner.check_password(password):

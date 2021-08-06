@@ -1,7 +1,7 @@
 from gino import Gino
 from datetime import datetime
 import hashlib
-import config
+from config import SALT
 
 db = Gino()
 
@@ -12,6 +12,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(50))
+    email = db.Column(db.String(128))
 
     def __str__(self):
         return f'{self.id} <> {self.username}'
@@ -20,17 +21,18 @@ class User(db.Model):
         return str(self)
 
     async def set_password(self, raw_password: str):
-        raw_password = f'{raw_password}{config.SALT}'
+        raw_password = f'{raw_password}{SALT}'
         await self.update(password=hashlib.md5(raw_password.encode()).hexdigest()).apply()
 
     def check_password(self, raw_password: str):
-        raw_password = f'{raw_password}{config.SALT}'
+        raw_password = f'{raw_password}{SALT}'
         return self.password == hashlib.md5(raw_password.encode()).hexdigest()
 
     def to_dict(self):
         return {
             'id': self.id,
             'username': self.username,
+            'email': self.email
         }
 
 
@@ -41,7 +43,7 @@ class Advert(db.Model):
     title = db.Column(db.String(300))
     description = db.Column(db.String(3000))
     created_at = db.Column(db.DateTime, default=datetime.now)
-    owner = db.Column(db.Integer, db.ForeignKey('app_users.id'))
+    owner = db.Column(db.Integer, db.ForeignKey('app_users.id', ondelete='CASCADE'))
 
     def __str__(self):
         return f'{self.id} <> {self.title}'

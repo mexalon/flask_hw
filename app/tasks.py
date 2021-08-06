@@ -17,7 +17,7 @@ def gmail_it(to, title, text):
     port = 465
     smtp_server = "smtp.gmail.com"
     sender_email = DEV_EMAIL
-    receiver_email = 'nabarysh@gmail.com'
+    receiver_email = to
     password = DEV_PASS
 
     message = MIMEMultipart()
@@ -34,12 +34,9 @@ def gmail_it(to, title, text):
 
 
 @app.task
-def send_email(to, title, text):
-    time.sleep(10)
-    gmail_it(to, title, text)
-    time.sleep(10)
-    return f"{to}>>{title}>>{text}"
-
+def send_email(title, text, to_list: list):
+    [gmail_it(to, title, text) for to in to_list]
+    return f"{to_list}>>{title}>>{text}"
 
 """ Без этого не хочет работать из под винды """
 """ celery -A tasks.app  worker -l info -P eventlet """

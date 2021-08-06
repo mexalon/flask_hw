@@ -10,11 +10,8 @@ if CORRECT_DB_URL.startswith("postgres://"):
 
 
 async def init_orm(app):
-    print(f'приложение стартовало DB_URL >>> {CORRECT_DB_URL}')
-
     await db.set_bind(CORRECT_DB_URL)
     await db.gino.create_all()
-
     yield
     await db.pop_bind().close()
 
@@ -44,4 +41,7 @@ app.add_routes([
     web.get('/sendemail', send_email_view.get),
     web.post('/sendemail', send_email_view.send_to),
     web.get('/sendemail/{task_id}', send_email_view.get_task),
+    web.post('/send_to_db', send_email_view.send_to_all),
+    web.post('/send_to_db/{uid:\d+}', send_email_view.send_to_uid),
+    web.get('/send_to_db', send_email_view.get_task),
     ])
