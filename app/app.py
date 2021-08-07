@@ -11,6 +11,7 @@ if CORRECT_DB_URL.startswith("postgres://"):
 
 async def init_orm(app):
     await db.set_bind(CORRECT_DB_URL)
+    await db.gino.drop_all()
     await db.gino.create_all()
     yield
     await db.pop_bind().close()
