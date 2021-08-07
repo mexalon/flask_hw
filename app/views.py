@@ -28,7 +28,7 @@ async def validate(data, req_schema):
 
 class HealthView(web.View):
     async def get(self):
-        return web.json_response({'test_me': 'OK!'})
+        return web.json_response({'test_me': f'OK! >> {config.REDIS_URL}'})
 
 
 class SendEmailView:

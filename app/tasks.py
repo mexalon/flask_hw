@@ -9,8 +9,8 @@ from config import DEV_EMAIL, DEV_PASS, REDIS_URL
 
 app = Celery(
     'tasks',
-    broker=f'{REDIS_URL}/1',
-    backend=f'{REDIS_URL}/2',
+    broker=f'{REDIS_URL}/0',
+    backend=f'{REDIS_URL}/1',
 )
 
 
