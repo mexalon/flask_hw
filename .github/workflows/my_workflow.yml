@@ -59,8 +59,3 @@
             heroku_app_name: "mexalon-flask-hw"
             heroku_email: "nabarysh@gmail.com"
             usedocker: true
-
-        - name: Make Celery work
-          run: |
-            cd app
-            celery -A tasks.app  worker -c 2

@@ -1,6 +1,32 @@
 version: "3.9"
 
 services:
+  myapp:
+    build: .
+    ports:
+      - 5000:5000
+    environment:
+      DATABASE_URL : 'postgresql://user_db:user_pass@my_postgres:5432/db_name'
+      REDIS_URL : 'redis://redis:6379'
+    links:
+      - redis
+      - my_postgres
+    depends_on:
+      - my_postgres
+      - redis
+
+  my_postgres:
+    image: postgres
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: user_db
+      POSTGRES_PASSWORD: user_pass
+      POSTGRES_DB: db_name
+    depends_on:
+      - redis
+
   redis:
     image: redis
     ports:

@@ -1,3 +1,4 @@
+import os
 import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -9,8 +10,8 @@ from config import DEV_EMAIL, DEV_PASS, REDIS_URL
 
 app = Celery(
     'tasks',
-    broker=f'{REDIS_URL}/0',
-    backend=f'{REDIS_URL}/1',
+    broker=f'{REDIS_URL}/1',
+    backend=f'{REDIS_URL}/2',
 )
 
 
