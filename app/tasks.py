@@ -1,26 +1,27 @@
-import os
-import time
+
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from celery import Celery
 
 import smtplib
 import ssl
-from config import DEV_EMAIL, DEV_PASS, REDIS_URL
+
+import config
+
 
 app = Celery(
     'tasks',
-    broker=f'{REDIS_URL}/1',
-    backend=f'{REDIS_URL}/2',
+    broker=f'{config.REDIS_URL}/1',
+    backend=f'{config.REDIS_URL}/2',
 )
 
 
 def gmail_it(to, subject, text):
     port = 465
     smtp_server = "smtp.gmail.com"
-    sender_email = DEV_EMAIL
+    sender_email = config.DEV_EMAIL
     receiver_email = to
-    password = DEV_PASS
+    password = config.DEV_PASS
 
     message = MIMEMultipart()
     message["Subject"] = subject
