@@ -46,7 +46,7 @@ async def main():
         'subject': 'test subject',
         'text': 'test text'
     }
-    uid = 12
+
     resp = await make_request(f"send_to_db/{uid}", 'post', headers=headers, json=some_mail)
     task_id = resp.get('task_id')
 
