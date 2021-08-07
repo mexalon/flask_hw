@@ -4,9 +4,11 @@ DATABASE_URL = os.getenv(
     'DATABASE_URL',
     'postgresql://flask_hw:flask_hw@127.0.0.1:5432/flask_hw')
 
-SALT = 'ksfh@#$$5Kgfkорплапл*&^*&7fy374'
+REDIS_URL = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379')
 
-ADMIN = 'admin'
+SALT = os.getenv('SALT', 'ksfh@#$$5Kgfkорплапл*&^*&7fy374')
+
+ADMIN = os.getenv('ADMIN', 'admin')
 ADMIN_PASS = os.getenv('ADMIN_PASS', 'temp_pass')
 
 DEV_EMAIL = os.getenv('DEV_EMAIL', 'nik683884@gmail.com')

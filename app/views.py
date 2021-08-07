@@ -58,11 +58,11 @@ class SendEmailView:
             body = await request.json()
             body = await validate(body, EMAIL_SH)
             to = [body.get("email"), ]
-            title = body.get('title', 'no subject')
+            subject = body.get('subject', 'no subject')
             text = body.get('text')
 
-            result = send_email.delay(title, text, to)
-            return web.json_response({'success': f'{result}'})
+            result = send_email.delay(subject, text, to)
+            return web.json_response({'task_id': f'{result}'})
 
         else:
             return web.json_response({'resp': 'no auth'})
@@ -74,15 +74,14 @@ class SendEmailView:
         password = header.get("password")
         if username == config.ADMIN and check_admin_pass(password):
             body = await request.json()
-            title = body.get('title', 'no subject')
+            subject = body.get('subject', 'no subject')
             text = body.get('text')
 
             users = await User.query.gino.all()
             to = [u.email for u in users if u.email]
-            print(to)
-            result = send_email.delay(title, text, to)
+            result = send_email.delay(subject, text, to)
 
-            return web.json_response({'success': f'{result}'})
+            return web.json_response({'task_id': f'{result}'})
 
         else:
             return web.json_response({'resp': 'no auth'})
@@ -94,15 +93,15 @@ class SendEmailView:
         password = header.get("password")
         if username == config.ADMIN and check_admin_pass(password):
             body = await request.json()
-            title = body.get('title', 'no subject')
+            subject = body.get('subject', 'no subject')
             text = body.get('text')
             user_id = request.match_info['uid']
             user = await User.get(int(user_id))
             if user:
                 if user.email:
                     to = [user.email]
-                    result = send_email.delay(title, text, to)
-                    return web.json_response({'success': f'{result}'})
+                    result = send_email.delay(subject, text, to)
+                    return web.json_response({'task_id': f'{result}'})
                 return web.json_response({'resp': 'no email'})
             else:
                 return web.json_response({'resp': 'user not found'})
@@ -128,8 +127,7 @@ class UserView:
             return web.json_response(user.to_dict())
 
         except Exception as er:
-            print(er)
-            raise web.HTTPBadRequest
+            return web.json_response({'resp': f"cant create user {username}"})
 
     async def get(self, request):
         users = await User.query.gino.all()
