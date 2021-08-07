@@ -7,7 +7,7 @@ services:
       - 5000:5000
     environment:
       DATABASE_URL : 'postgresql://user_db:user_pass@my_postgres:5432/db_name'
-      REDIS_URL : 'redis://redis:6379'
+      REDIS_TLS_URL : 'redis://redis:6379'
     links:
       - redis
       - my_postgres
