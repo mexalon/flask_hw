@@ -11,8 +11,8 @@ import config
 
 app = Celery(
     'tasks',
-    broker=f'{config.REDIS_URL}/1',
-    backend=f'{config.REDIS_URL}/2',
+    broker=f'{config.REDIS_URL}/0',
+    backend=f'{config.REDIS_URL}/1',
 )
 
 

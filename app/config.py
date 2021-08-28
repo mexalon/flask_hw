@@ -11,5 +11,5 @@ SALT = os.getenv('SALT', 'ksfh@#$$5Kgfkорплапл*&^*&7fy374')
 ADMIN = os.getenv('ADMIN', 'admin')
 ADMIN_PASS = os.getenv('ADMIN_PASS', 'temp_pass')
 
-DEV_EMAIL = os.getenv('DEV_EMAIL', 'your.email@here.com')
-DEV_PASS = os.getenv('DEV_PASS', 'itspassword123')
+DEV_EMAIL = os.getenv('DEV_EMAIL', 'typeyouremail@gmail.com')
+DEV_PASS = os.getenv('DEV_PASS', 'typeyourepass')
